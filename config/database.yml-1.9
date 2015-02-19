@@ -3,20 +3,20 @@
 # Examples for PostgreSQL and SQLite3 can be found at the end.
 
 production:
-  adapter:  mysql2
+  adapter:  <%= ENV['OPENSHIFT_MYSQL_DB_HOST'] ? 'mysql2' : 'postgresql' %>
   database: <%= ENV['OPENSHIFT_APP_NAME'] %>
-  host:     <%= ENV['OPENSHIFT_MYSQL_DB_HOST'] %>
-  username: <%= ENV['OPENSHIFT_MYSQL_DB_USERNAME'] %>
-  password: <%= ENV['OPENSHIFT_MYSQL_DB_PASSWORD'] %>
-  port:     <%= ENV['OPENSHIFT_MYSQL_DB_PORT'] %>
+  host:     <%= ENV['OPENSHIFT_MYSQL_DB_HOST'] or ENV['OPENSHIFT_POSTGRESQL_DB_HOST'] %>
+  username: <%= ENV['OPENSHIFT_MYSQL_DB_USERNAME'] or ENV['OPENSHIFT_POSTGRESQL_DB_USERNAME']  %>
+  password: <%= ENV['OPENSHIFT_MYSQL_DB_PASSWORD'] or ENV['OPENSHIFT_POSTGRESQL_DB_PASSWORD']%>
+  port:     <%= ENV['OPENSHIFT_MYSQL_DB_PORT'] or  ENV['OPENSHIFT_POSTGRESQL_DB_PORT'] %>
   encoding: utf8
 
 development:
-  adapter:  mysql
+  adapter:  <%= ENV['OPENSHIFT_MYSQL_DB_HOST'] ? 'mysql2' : 'postgresql' %>
   database: redmine_development
-  host:     <%= ENV['OPENSHIFT_MYSQL_DB_HOST'] %>
-  username: <%= ENV['OPENSHIFT_MYSQL_DB_USERNAME'] %>
-  password: <%= ENV['OPENSHIFT_MYSQL_DB_PASSWORD'] %>
+  host:     <%= ENV['OPENSHIFT_POSTGRESQL_DB_HOST'] %>
+  username: <%= ENV['OPENSHIFT_POSTGRESQL_DB_USERNAME'] %>
+  password: <%= ENV['OPENSHIFT_POSTGRESQL_DB_PASSWORD'] %>
   encoding: utf8
 
 # Warning: The database defined as "test" will be erased and

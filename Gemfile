@@ -40,9 +40,9 @@ end
 
 # TO_DO: Add support for PostgreSQL and Sqlite as
 # for now Redmine quickstart works with MySQL
-# group :postgres do
-#   gem "pg", ">= 0.11.0"
-# end
+group :postgres do
+  gem "pg", ">= 0.11.0"
+end
 
 # group :sqlite3 do
 #   gem "sqlite3"

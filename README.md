@@ -12,11 +12,15 @@ Running on OpenShift
 
 Create an account at https://www.openshift.com
 
-Create a ruby application
+Create a ruby application with either MySQL
 
 	rhc app create redmine ruby-1.9 mysql-5.1 
 
-Make a note of the username, password, and host name as you will need to use these to login to the mysql database.
+or PostgreSQL
+
+	rhc app create redmine ruby-1.9 postgresql-9.2
+
+Make a note of the username, password, and host name as you will need to use these to login to the database.
 
 The current version of Redmine based on Rails 3.2 which is not supported
 on the Ruby 2.0 cartridge ([Rails#10877](https://github.com/rails/rails/issues/10877)).

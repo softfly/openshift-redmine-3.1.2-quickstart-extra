@@ -5,28 +5,46 @@
 
 set -e
 
-function mysql_call() {
-    mysql   -h "$OPENSHIFT_MYSQL_DB_HOST" \
-            -P "$OPENSHIFT_MYSQL_DB_PORT" \
-            -u "$OPENSHIFT_MYSQL_DB_USERNAME" \
-            --password="$OPENSHIFT_MYSQL_DB_PASSWORD" \
-            "$OPENSHIFT_APP_NAME"
-}
+source $OPENSHIFT_REPO_DIR/.openshift/action_hooks/utils
 
-if [ -z $OPENSHIFT_MYSQL_DB_HOST ]; then
+if [ ${OPENSHIFT_MYSQL_DB_HOST} ]; then
+    DBMS_NAME=mysql
+    function db_call() {
+        mysql "$OPENSHIFT_APP_NAME" $@
+    }
+
+    function db_list_tables() {
+        echo "use $OPENSHIFT_APP_NAME; show tables"  | db_call
+    }
+elif [ ${OPENSHIFT_POSTGRESQL_DB_HOST} ]; then
+    DBMS_NAME=postgresql
+    function db_call() {
+        psql "$OPENSHIFT_APP_NAME" $@
+    }
+
+    function db_list_tables() {
+        db_call -c '\d'
+    }
+else
     echo 1>&2
-    echo "Could not find mysql database. Please run:" 1>&2
+    echo "Could not find a database. Please run:" 1>&2
     echo "rhc cartridge add -a $OPENSHIFT_APP_NAME -c mysql-5.1" 1>&2
+    echo "or:"
+    echo "rhc cartridge add -a $OPENSHIFT_APP_NAME -c postgresql-9.2" 1>&2
     echo "then make a sample commit (add whitespace somewhere) and re-push" 1>&2
     echo 1>&2
     exit 5
 fi
 
+echo ------------------------
+echo Selected DBMS: $DBMS_NAME
+echo ------------------------
+
 # Determinate wheather it is or it isn't the initial deployment,
 # so the database will be created from redmine.sql or there are
 # changes which need to be migrated.
 
-if echo "use $OPENSHIFT_APP_NAME; show tables"  | mysql_call | grep attachments > /dev/null
+if db_list_tables | grep attachments > /dev/null
 then
     # Runs on every other Redmine application deployment
     # except the first one.
@@ -42,8 +60,8 @@ else
 
     pushd ${OPENSHIFT_REPO_DIR}/db > /dev/null
     echo "Loading database"
-    gunzip -c redmine.sql.gz | mysql_call
-    rm redmine.sql.gz
+    gunzip -c redmine-${DBMS_NAME}.sql.gz | db_call
+    rm redmine-${DBMS_NAME}.sql.gz
     popd > /dev/null
 fi
 
