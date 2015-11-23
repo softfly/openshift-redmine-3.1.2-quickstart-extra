@@ -1,7 +1,7 @@
 # encoding: utf-8
 #
 # Redmine - project management software
-# Copyright (C) 2006-2013  Jean-Philippe Lang
+# Copyright (C) 2006-2015  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -79,17 +79,44 @@ module SettingsHelper
 
   def setting_label(setting, options={})
     label = options.delete(:label)
-    label != false ? label_tag("settings_#{setting}", l(label || "setting_#{setting}")).html_safe : ''
+    if label == false
+      ''
+    else
+      text = label.is_a?(String) ? label : l(label || "setting_#{setting}")
+      label_tag("settings_#{setting}", text, options[:label_options])
+    end
   end
 
   # Renders a notification field for a Redmine::Notifiable option
   def notification_field(notifiable)
-    return content_tag(:label,
-                       check_box_tag('settings[notified_events][]',
-                                     notifiable.name,
-                                     Setting.notified_events.include?(notifiable.name), :id => nil).html_safe +
-                         l_or_humanize(notifiable.name, :prefix => 'label_').html_safe,
-                       :class => notifiable.parent.present? ? "parent" : '').html_safe
+    tag_data = notifiable.parent.present? ?
+      {:parent_notifiable => notifiable.parent} :
+      {:disables => "input[data-parent-notifiable=#{notifiable.name}]"}
+
+    tag = check_box_tag('settings[notified_events][]',
+      notifiable.name,
+      Setting.notified_events.include?(notifiable.name),
+      :id => nil,
+      :data => tag_data)
+
+    text = l_or_humanize(notifiable.name, :prefix => 'label_')
+
+    options = {}
+    if notifiable.parent.present?
+      options[:class] = "parent"
+    end
+
+    content_tag(:label, tag + text, options)
+  end
+
+  def link_copied_issue_options
+    options = [
+      [:general_text_Yes, 'yes'],
+      [:general_text_No, 'no'],
+      [:label_ask, 'ask']
+    ]
+
+    options.map {|label, value| [l(label), value.to_s]}
   end
 
   def cross_project_subtasks_options
@@ -102,5 +129,43 @@ module SettingsHelper
     ]
 
     options.map {|label, value| [l(label), value.to_s]}
+  end
+
+  def parent_issue_dates_options
+    options = [
+      [:label_parent_task_attributes_derived, 'derived'],
+      [:label_parent_task_attributes_independent, 'independent']
+    ]
+
+    options.map {|label, value| [l(label), value.to_s]}
+  end
+
+  def parent_issue_priority_options
+    options = [
+      [:label_parent_task_attributes_derived, 'derived'],
+      [:label_parent_task_attributes_independent, 'independent']
+    ]
+
+    options.map {|label, value| [l(label), value.to_s]}
+  end
+
+  def parent_issue_done_ratio_options
+    options = [
+      [:label_parent_task_attributes_derived, 'derived'],
+      [:label_parent_task_attributes_independent, 'independent']
+    ]
+
+    options.map {|label, value| [l(label), value.to_s]}
+  end
+
+  # Returns the options for the date_format setting
+  def date_format_setting_options(locale)
+    Setting::DATE_FORMATS.map do |f|
+      today = ::I18n.l(Date.today, :locale => locale, :format => f)
+      format = f.gsub('%', '').gsub(/[dmY]/) do
+        {'d' => 'dd', 'm' => 'mm', 'Y' => 'yyyy'}[$&]
+      end
+      ["#{today} (#{format})", f]
+    end
   end
 end

@@ -39,4 +39,8 @@
 /.bundle
 /Gemfile.lock
 /Gemfile.local
-
+target
+.settings/*
+!.settings/.jsdtscope
+.project
+.classpath

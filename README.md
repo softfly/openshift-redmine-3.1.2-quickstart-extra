@@ -14,17 +14,14 @@ Create an account at https://www.openshift.com
 
 Create a ruby application with either MySQL
 
-	rhc app create redmine ruby-1.9 mysql-5.1 
+	rhc app create redmine ruby-2.0 mysql-5.5 
 
 or PostgreSQL
 
-	rhc app create redmine ruby-1.9 postgresql-9.2
+	rhc app create redmine ruby-2.0 postgresql-9.2
 
 Make a note of the username, password, and host name as you will need to use these to login to the database.
 
-The current version of Redmine based on Rails 3.2 which is not supported
-on the Ruby 2.0 cartridge ([Rails#10877](https://github.com/rails/rails/issues/10877)).
-Until Rails 4 version of Redmine is not released, you can try some of the community [forks](https://github.com/marutosi/redmine/tree/rails4.0.20140608-0).
 
 Add this upstream Redmine quickstart repo
 
@@ -54,6 +51,53 @@ the password for the Redmine admin user - see the Change password link at:
 
 	http://redmine-$yournamespace.rhcloud.com/my/account
 
+Procedure create this instance redmine
+-----------------------------------
+<pre>
+# The Openshift application must be configured as follows:
+# Ruby 1.9 or 2.0 (no scaling)
+# MySql 5.1
+
+# Begin the installation by navigating to the app runtime directory
+cd ~/app-root/runtime/repo/
+
+# delete all
+rm -rf *
+
+# download redmine
+wget http://www.redmine.org/releases/redmine-3.1.2.tar.gz
+tar xvzf redmine-3.1.2.tar.gz
+rm redmine-3.1.2.tar.gz
+
+# extract it to its new environment
+mv redmine-3.1.2/* ~/app-root/runtime/repo/
+rm -rf redmine-3.1.2*
+
+# install bundeler for your version ruby
+gem install bundler -no-ri -no-rdoc
+#bug openshift, bundler working for old version ruby, you should now restart session SSH 
+
+
+# get the configuration files
+cd ~/app-root/runtime/repo/config
+wget —no-check-certificate https://raw.githubusercontent.com/GregorianPL/openshift-redmine-3.1.2-quickstart/master/config/database.yml-2.0
+wget —no-check-certificate https://raw.githubusercontent.com/GregorianPL/openshift-redmine-3.1.2-quickstart/master/config/configuration.yml
+cd ~/app-root/runtime/repo/
+
+# bundle install
+bundle install --no-deployment 
+
+# populate the database
+rake generate_secret_token
+RAILS_ENV=production rake db:migrate
+RAILS_ENV=production rake redmine:load_default_data
+
+# restart the app/gear
+gear stop
+gear start
+</pre>
+
+
 Version
 -----------------------------------
-Redmine 2.4
+Redmine 3.1.2

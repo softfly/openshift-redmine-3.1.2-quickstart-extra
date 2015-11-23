@@ -1,5 +1,5 @@
 # Redmine - project management software
-# Copyright (C) 2006-2013  Jean-Philippe Lang
+# Copyright (C) 2006-2015  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -55,7 +55,9 @@ Examples:
 END_DESC
 
     task :read => :environment do
-      MailHandler.receive(STDIN.read, MailHandler.extract_options_from_env(ENV))
+      Mailer.with_synched_deliveries do
+        MailHandler.receive(STDIN.read, MailHandler.extract_options_from_env(ENV))
+      end
     end
 
     desc <<-END_DESC
@@ -75,7 +77,8 @@ General options:
 Available IMAP options:
   host=HOST                IMAP server host (default: 127.0.0.1)
   port=PORT                IMAP server port (default: 143)
-  ssl=SSL                  Use SSL? (default: false)
+  ssl=SSL                  Use SSL/TLS? (default: false)
+  starttls=STARTTLS        Use STARTTLS? (default: false)
   username=USERNAME        IMAP account
   password=PASSWORD        IMAP password
   folder=FOLDER            IMAP folder to read (default: INBOX)
@@ -86,6 +89,7 @@ Issue attributes control options:
   tracker=TRACKER          name of the target tracker
   category=CATEGORY        name of the target category
   priority=PRIORITY        name of the target priority
+  private                  create new issues as private
   allow_override=ATTRS     allow email content to override attributes
                            specified by previous options
                            ATTRS is a comma separated list of attributes
@@ -116,13 +120,16 @@ END_DESC
       imap_options = {:host => ENV['host'],
                       :port => ENV['port'],
                       :ssl => ENV['ssl'],
+                      :starttls => ENV['starttls'],
                       :username => ENV['username'],
                       :password => ENV['password'],
                       :folder => ENV['folder'],
                       :move_on_success => ENV['move_on_success'],
                       :move_on_failure => ENV['move_on_failure']}
 
-      Redmine::IMAP.check(imap_options, MailHandler.extract_options_from_env(ENV))
+      Mailer.with_synched_deliveries do
+        Redmine::IMAP.check(imap_options, MailHandler.extract_options_from_env(ENV))
+      end
     end
 
     desc <<-END_DESC
@@ -134,6 +141,7 @@ Available POP3 options:
   username=USERNAME        POP3 account
   password=PASSWORD        POP3 password
   apop=1                   use APOP authentication (default: false)
+  ssl=SSL                  Use SSL? (default: false)
   delete_unprocessed=1     delete messages that could not be processed
                            successfully from the server (default
                            behaviour is to leave them on the server)
@@ -145,11 +153,14 @@ END_DESC
       pop_options  = {:host => ENV['host'],
                       :port => ENV['port'],
                       :apop => ENV['apop'],
+                      :ssl => ENV['ssl'],
                       :username => ENV['username'],
                       :password => ENV['password'],
                       :delete_unprocessed => ENV['delete_unprocessed']}
 
-      Redmine::POP3.check(pop_options, MailHandler.extract_options_from_env(ENV))
+      Mailer.with_synched_deliveries do
+        Redmine::POP3.check(pop_options, MailHandler.extract_options_from_env(ENV))
+      end
     end
 
     desc "Send a test email to the user with the provided login name"
